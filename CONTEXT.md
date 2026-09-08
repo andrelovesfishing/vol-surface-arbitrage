@@ -101,6 +101,16 @@ Implied volatility squared multiplied by tenor. The quantity in which the
 calendar condition is naturally stated.
 _Avoid_: total variance, w
 
+**Forward Price**:
+The price of the future expiring with an instrument, quoted per snapshot per
+expiry. The rate coin premiums are converted at, and the `F` in Black-76.
+_Avoid_: futures price, underlying price (that name is the API's, and ambiguous)
+
+**Index Price**:
+The spot value of one coin in USD. Recorded for reference and to measure the
+basis against the forward; never used to convert a premium ([ADR 0007](docs/adr/0007-premiums-convert-at-the-forward.md)).
+_Avoid_: spot, delivery price
+
 **Inverse Quoting**:
 Deribit's convention of quoting option prices in units of the underlying
 coin rather than USD. The source of the project's main unit hazard.
