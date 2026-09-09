@@ -1,0 +1,16 @@
+"""The report is the deliverable, so its numbers are checked like any other."""
+from conftest import quotes_con, surface
+from vsa.report import render
+
+CONVEX = {90_000: 4000.0, 91_000: 3200.0, 92_000: 2500.0, 93_000: 1900.0, 94_000: 1400.0}
+
+
+def test_reports_the_headline_and_the_per_bucket_table():
+    rows = surface({**CONVEX, 92_000: 2700.0}, half_spread=100.0)
+    rows += surface(CONVEX, half_spread=100.0, currency="ETH")
+
+    text = render(quotes_con(rows))
+
+    assert "1 of 3 butterflies" in text      # mid violations, BTC
+    assert "100.0% of it is spread illusion" in text
+    assert "ETH" in text and "0-7d" in text
