@@ -72,7 +72,7 @@ def _butterflies_sql(basis: str, min_ticks: float, currency: str | None = None) 
         ),
         priced AS (
             SELECT currency, snapshot_ts, expiry_ts, option_type, tenor_years,
-                   k_low, k_body, k_high,
+                   forward_usd, k_low, k_body, k_high,
                    (k_high - k_body) / (k_high - k_low) AS w_low,
                    ((k_high - k_body) * low_usd + (k_body - k_low) * high_usd)
                        / (k_high - k_low) - body_usd AS cost_usd,
@@ -89,14 +89,24 @@ def _butterflies_sql(basis: str, min_ticks: float, currency: str | None = None) 
 # pooling them would hide the effect the project is measuring.
 TENOR_BUCKETS = (("0-7d", 7.0), ("7-30d", 30.0), ("30-90d", 90.0), ("90d+", None))
 
-_BUCKET_SQL = "CASE " + " ".join(
-    f"WHEN tenor_years < {days / 365.0} THEN '{label}'"
-    for label, days in TENOR_BUCKETS if days is not None
-) + f" ELSE '{TENOR_BUCKETS[-1][0]}' END"
 
-_BUCKET_ORDER = "CASE tenor_bucket " + " ".join(
-    f"WHEN '{label}' THEN {i}" for i, (label, _) in enumerate(TENOR_BUCKETS)
-) + " END"
+
+def _bucket_case(expr: str, buckets) -> str:
+    """Map expr into labelled bands; the last band is the open-ended one."""
+    return "CASE " + " ".join(
+        f"WHEN {expr} < {hi} THEN '{label}'" for label, hi in buckets if hi is not None
+    ) + f" ELSE '{buckets[-1][0]}' END"
+
+
+def _bucket_order(column: str, buckets) -> str:
+    return f"CASE {column} " + " ".join(
+        f"WHEN '{label}' THEN {i}" for i, (label, _) in enumerate(buckets)
+    ) + " END"
+
+
+_TENOR_YEARS = tuple((label, None if d is None else d / 365.0) for label, d in TENOR_BUCKETS)
+_BUCKET_SQL = _bucket_case("tenor_years", _TENOR_YEARS)
+_BUCKET_ORDER = _bucket_order("tenor_bucket", TENOR_BUCKETS)
 
 
 class Headline(NamedTuple):
@@ -166,6 +176,18 @@ class Capture(NamedTuple):
     p90: float
 
 
+def _required_sql(min_ticks: float, currency: str | None, select: str = "") -> str:
+    """Capture required, one row per butterfly that violates on mid."""
+    key = "currency, snapshot_ts, expiry_ts, option_type, k_low, k_body, k_high"
+    return f"""
+        WITH m AS ({_butterflies_sql("mid", min_ticks, currency)}),
+             e AS ({_butterflies_sql("executable", min_ticks, currency)})
+        SELECT {select} e.cost_usd / (e.cost_usd - m.cost_usd) AS capture_required
+        FROM m JOIN e USING ({key})
+        WHERE m.is_violation AND e.cost_usd > m.cost_usd
+    """
+
+
 def capture(
     con: duckdb.DuckDBPyConnection, *, min_ticks: float = 1.0, currency: str | None = None
 ) -> Capture:
@@ -177,17 +199,42 @@ def capture(
     three legs at once. Zero executable violations is exactly D < S everywhere,
     and this is that binary as a distribution.
     """
-    key = "currency, snapshot_ts, expiry_ts, option_type, k_low, k_body, k_high"
     row = con.sql(f"""
-        WITH m AS ({_butterflies_sql("mid", min_ticks, currency)}),
-             e AS ({_butterflies_sql("executable", min_ticks, currency)}),
-             required AS (
-                 SELECT e.cost_usd / (e.cost_usd - m.cost_usd) AS capture_required
-                 FROM m JOIN e USING ({key})
-                 WHERE m.is_violation AND e.cost_usd > m.cost_usd
-             )
         SELECT count(*), median(capture_required),
                quantile_cont(capture_required, 0.1), quantile_cont(capture_required, 0.9)
-        FROM required
+        FROM ({_required_sql(min_ticks, currency)})
     """).fetchone()
     return Capture(*row)
+
+
+MONEYNESS_BUCKETS = (("<0.8", 0.8), ("0.8-0.95", 0.95), ("0.95-1.05", 1.05),
+                     ("1.05-1.25", 1.25), ("1.25+", None))
+SPREAD_BUCKETS = (("<2t", 2.0), ("2-5t", 5.0), ("5-20t", 20.0), ("20-100t", 100.0),
+                  ("100t+", None))
+
+# Both legs of the join carry tick_usd and forward_usd, so those need qualifying.
+PROFILE_DIMENSIONS = {
+    "tenor": ("m.tenor_years", _TENOR_YEARS),
+    "moneyness": ("k_body / m.forward_usd", MONEYNESS_BUCKETS),
+    "spread": ("(e.cost_usd - m.cost_usd) / m.tick_usd", SPREAD_BUCKETS),
+}
+
+
+def capture_profile(
+    con: duckdb.DuckDBPyConnection, *, by: str,
+    min_ticks: float = 1.0, currency: str | None = None,
+) -> duckdb.DuckDBPyRelation:
+    """Capture required, cut by one observable: does any slice come closer?
+
+    Descriptive, not pre-registered (ADR 0009). A flat profile is the point —
+    it says no corner of the surface is nearer to a tradeable violation.
+    """
+    expr, buckets = PROFILE_DIMENSIONS[by]
+    inner = _required_sql(min_ticks, currency, f"{_bucket_case(expr, buckets)} AS bucket,")
+    return con.sql(f"""
+        SELECT bucket, count(*) AS n_violations,
+               median(capture_required) AS median_capture,
+               quantile_cont(capture_required, 0.1) AS p10_capture
+        FROM ({inner})
+        GROUP BY bucket ORDER BY {_bucket_order("bucket", buckets)}
+    """)

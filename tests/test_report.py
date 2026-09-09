@@ -21,3 +21,11 @@ def test_reports_how_much_spread_an_apparent_violation_would_need_you_to_capture
 
     assert "spread an apparent violation would need you to capture" in text
     assert "median 25.0%" in text
+
+
+def test_reports_capture_required_cut_by_each_observable():
+    text = render(quotes_con(surface({**CONVEX, 92_000: 2700.0}, half_spread=100.0)))
+
+    assert "capture required by slice" in text
+    assert "tenor" in text and "moneyness" in text and "spread" in text
+    assert "1.05-1.25" in text     # the body sits at 92k against a ~79.5k forward

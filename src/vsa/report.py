@@ -11,7 +11,9 @@ from pathlib import Path
 
 import duckdb
 
-from vsa.convexity import TICK_COIN, capture, headline, summarise
+from vsa.convexity import (
+    PROFILE_DIMENSIONS, TICK_COIN, capture, capture_profile, headline, summarise,
+)
 from vsa.dataset import connect
 from vsa.load import PARQUET_DIR
 
@@ -62,6 +64,16 @@ def render(con: duckdb.DuckDBPyConnection, *, min_ticks: float = 1.0) -> str:
             f"   over {c.n:,} mid violations"
         )
         out.append("")
+
+        if c.n:
+            out.append("  capture required by slice (descriptive, ADR 0009)")
+            out.append(f"    {'dimension':<12}{'bucket':<12}{'violations':>12}{'median':>10}{'p10':>10}")
+            for dim in PROFILE_DIMENSIONS:
+                for bucket, n, med, p10 in capture_profile(
+                    con, by=dim, min_ticks=min_ticks, currency=currency
+                ).fetchall():
+                    out.append(f"    {dim:<12}{bucket:<12}{n:>12,}{med:>10.1%}{p10:>10.1%}")
+            out.append("")
 
     return "\n".join(out)
 
