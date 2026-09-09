@@ -11,7 +11,7 @@ from pathlib import Path
 
 import duckdb
 
-from vsa.convexity import TICK_COIN, headline, summarise
+from vsa.convexity import TICK_COIN, capture, headline, summarise
 from vsa.dataset import connect
 from vsa.load import PARQUET_DIR
 
@@ -52,6 +52,15 @@ def render(con: duckdb.DuckDBPyConnection, *, min_ticks: float = 1.0) -> str:
             s = headline(con, min_ticks=ticks, currency=currency)
             share = "n/a" if s.illusion_share is None else f"{s.illusion_share:.1%} illusion"
             out.append(f"    {ticks:g} ticks: mid {s.mid_rate:>7.2%} -> executable {s.executable_rate:>7.2%}   ({share})")
+        out.append("")
+
+        c = capture(con, min_ticks=min_ticks, currency=currency)
+        out.append("  spread an apparent violation would need you to capture")
+        out.append(
+            "    no mid violations to measure" if not c.n else
+            f"    median {c.median:.1%}   (p10 {c.p10:.1%}, p90 {c.p90:.1%})"
+            f"   over {c.n:,} mid violations"
+        )
         out.append("")
 
     return "\n".join(out)

@@ -14,3 +14,10 @@ def test_reports_the_headline_and_the_per_bucket_table():
     assert "1 of 3 butterflies" in text      # mid violations, BTC
     assert "100.0% of it is spread illusion" in text
     assert "ETH" in text and "0-7d" in text
+
+
+def test_reports_how_much_spread_an_apparent_violation_would_need_you_to_capture():
+    text = render(quotes_con(surface({**CONVEX, 92_000: 2700.0}, half_spread=100.0)))
+
+    assert "spread an apparent violation would need you to capture" in text
+    assert "median 25.0%" in text

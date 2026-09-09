@@ -157,3 +157,37 @@ def headline(
         executable_rate=exec_v / n if n else 0.0,
         illusion_share=None if not mid_v else 1.0 - exec_v / mid_v,
     )
+
+
+class Capture(NamedTuple):
+    n: int  # mid violations measured; the population is the apparent arbitrage
+    median: float
+    p10: float
+    p90: float
+
+
+def capture(
+    con: duckdb.DuckDBPyConnection, *, min_ticks: float = 1.0, currency: str | None = None
+) -> Capture:
+    """How much of the quoted spread an apparent violation would need you to capture.
+
+    Paying the spread on every leg costs S = cost_executable - cost_mid, so a
+    violation of D = -cost_mid becomes free money only once you trade
+    1 - D/S = cost_executable/S of the way from the touch to the mid, on all
+    three legs at once. Zero executable violations is exactly D < S everywhere,
+    and this is that binary as a distribution.
+    """
+    key = "currency, snapshot_ts, expiry_ts, option_type, k_low, k_body, k_high"
+    row = con.sql(f"""
+        WITH m AS ({_butterflies_sql("mid", min_ticks, currency)}),
+             e AS ({_butterflies_sql("executable", min_ticks, currency)}),
+             required AS (
+                 SELECT e.cost_usd / (e.cost_usd - m.cost_usd) AS capture_required
+                 FROM m JOIN e USING ({key})
+                 WHERE m.is_violation AND e.cost_usd > m.cost_usd
+             )
+        SELECT count(*), median(capture_required),
+               quantile_cont(capture_required, 0.1), quantile_cont(capture_required, 0.9)
+        FROM required
+    """).fetchone()
+    return Capture(*row)
