@@ -12,6 +12,7 @@ from pathlib import Path
 import duckdb
 
 from vsa.bandfit import headline as band_headline, materialise as materialise_bandfit
+from vsa.calendar import headline as calendar_headline
 from vsa.convexity import (
     PROFILE_DIMENSIONS, TICK_COIN, capture, capture_profile, headline, summarise,
 )
@@ -97,6 +98,16 @@ def render(con: duckdb.DuckDBPyConnection, *, min_ticks: float = 1.0) -> str:
             f"    median |gap| {r.median_abs:.4f} vol   (p90 {r.p90_abs:.4f}, "
             f"signed {r.median_signed:+.4f})   over {r.n:,} quotes, {r.n_unsolved:,} unsolved"
         )
+        out.append("")
+
+        out.append("  total variance against tenor (calendar condition)")
+        out.append(f"    {'basis':<12}{'points':>10}{'violations':>12}{'rate':>9}{'unsolved':>10}{'skipped':>10}")
+        for basis in ("mid", "executable"):
+            c = calendar_headline(con, basis, currency=currency)
+            out.append(
+                f"    {c.basis:<12}{c.n_points:>10,}{c.n_violations:>12,}{c.rate:>9.2%}"
+                f"{c.n_unsolved:>10,}{c.n_skipped_pairs:>10,}"
+            )
         out.append("")
 
     return "\n".join(out)
