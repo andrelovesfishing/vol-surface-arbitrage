@@ -4,7 +4,7 @@ Static no-arbitrage conditions are violated constantly on a live quoted options
 surface. Almost none of those violations are tradeable. This project measures
 the gap.
 
-**Status: metrics pre-registered, data collection running, analysis not yet written.**
+**Status: convexity measured, vol-space conditions in progress.**
 Headline numbers will be filled in below. They are not being chosen after the fact
 — see [ADR 0006](docs/adr/0006-metrics-pre-registered.md).
 
@@ -39,6 +39,24 @@ This is a publishable outcome, not a failure. It is also the expected one.
 
 **Robustness** — the primary metric is computed independently on BTC and on ETH.
 Disagreement between them is reported, not reconciled.
+
+### Band feasibility (added 2026-09-10, pre-registered before running)
+
+Counting violating triples asks whether any individual triple of quotes is
+inconsistent. The stronger question is whether the quotes are collectively
+consistent: does a single arbitrage-free surface lie inside every quoted
+bid/ask at once? See [ADR 0010](docs/adr/0010-band-feasibility-is-pre-registered.md).
+
+**Primary** — the share of slices whose band admits such a surface, on mid and
+on executable, per currency, and how far the band would have to widen where it
+does not.
+
+**Prediction** — executable bands admit one essentially everywhere; mid bands
+widely do not. An executable slice that fails is a multi-leg arbitrage no
+triple test can see.
+
+The forward used throughout is implied from put-call parity rather than taken
+from the exchange ([ADR 0011](docs/adr/0011-the-forward-is-implied-from-parity.md)).
 
 ## Data
 
