@@ -53,3 +53,63 @@ def test_vega_matches_a_finite_difference():
     up = black76.price(F, K, T, sigma + h, df, True)
     dn = black76.price(F, K, T, sigma - h, df, True)
     assert black76.vega(F, K, T, sigma, df) == pytest.approx((up - dn) / (2 * h), rel=1e-6)
+
+
+def test_inversion_round_trips():
+    F, K, T, df = 79_459.55, 85_000.0, 0.25, 0.995
+    for sigma in (0.05, 0.4, 1.2, 3.0):
+        p = black76.price(F, K, T, sigma, df, True)
+        assert black76.implied_vol(p, F, K, T, df, True) == pytest.approx(sigma, rel=1e-8)
+
+
+# Deep in the money at 12 hours, vega is ~0: the price pins down sigma only weakly,
+# so that point is checked in price space rather than in vol space.
+INVERT_GRID = [g for g in GRID if g != (79_459.55, 60_000.0, 0.00137, 0.55)]
+
+
+@pytest.mark.parametrize("F,K,T,sigma", INVERT_GRID)
+@pytest.mark.parametrize("is_call", [True, False])
+def test_inversion_matches_oracle(F, K, T, sigma, is_call):
+    from vollib.black.implied_volatility import implied_volatility as oracle_iv
+
+    r = 0.03
+    df = np.exp(-r * T)
+    p = black76.price(F, K, T, sigma, df, is_call)
+    ours = black76.implied_vol(p, F, K, T, df, is_call)
+    theirs = oracle_iv(p, F, K, r, T, "c" if is_call else "p")  # note: (r, t) order
+    assert ours == pytest.approx(theirs, rel=1e-8)
+
+
+@pytest.mark.parametrize("F,K,T,sigma", GRID)
+@pytest.mark.parametrize("is_call", [True, False])
+def test_inversion_reproduces_the_price_everywhere(F, K, T, sigma, is_call):
+    df = np.exp(-0.03 * T)
+    p = black76.price(F, K, T, sigma, df, is_call)
+    back = black76.price(F, K, T, black76.implied_vol(p, F, K, T, df, is_call), df, is_call)
+    assert back == pytest.approx(p, rel=1e-8, abs=1e-10)
+
+
+def test_price_below_intrinsic_has_no_implied_vol():
+    F, K, T, df = 100.0, 90.0, 0.5, 0.99
+    assert np.isnan(black76.implied_vol(df * 9.0, F, K, T, df, True))
+
+
+def test_price_above_the_forward_has_no_implied_vol():
+    F, K, T, df = 100.0, 90.0, 0.5, 0.99
+    assert np.isnan(black76.implied_vol(df * 100.5, F, K, T, df, True))
+
+
+def test_deep_wing_inverts_where_vega_collapses():
+    # Vega is ~0 here, so Newton alone cannot land it; bisection must.
+    F, K, T, df, sigma = 79_459.55, 150_000.0, 0.02, 1.0, 0.9
+    p = black76.price(F, K, T, sigma, df, True)
+    assert black76.implied_vol(p, F, K, T, df, True) == pytest.approx(sigma, rel=1e-6)
+
+
+def test_inversion_is_vectorised():
+    F, T, df = 100.0, 0.5, 0.99
+    K = np.array([80.0, 100.0, 120.0])
+    sigma = np.array([0.3, 0.5, 0.8])
+    p = black76.price(F, K, T, sigma, df, True)
+    got = black76.implied_vol(p, F, K, T, df, True)
+    assert got == pytest.approx(sigma, rel=1e-8)
