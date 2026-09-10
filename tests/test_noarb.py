@@ -126,3 +126,70 @@ def test_put_vertical_spread_is_capped_by_discounted_strike_gap():
     iv = p.n_call + p.n_put + 1
     # P_next - P_prev <= v*dK; v's coefficient must be negative to bound the gap
     assert row[j] == -1.0 and row[j + 1] == 1.0 and row[iv] == pytest.approx(-10.0)
+
+
+def arb_free(k, sigma=0.5, F=100.0, df=0.99, tenor=0.25):
+    """Calls and puts from one flat vol: arbitrage-free by construction."""
+    from vsa import black76
+    calls = np.asarray([float(black76.price(F, x, tenor, sigma, df, True)) for x in k])
+    puts = np.asarray([float(black76.price(F, x, tenor, sigma, df, False)) for x in k])
+    return calls, puts
+
+
+def test_an_arbitrage_free_surface_inside_a_wide_band_is_feasible():
+    k = np.array([80.0, 90.0, 100.0, 110.0, 120.0])
+    calls, puts = arb_free(k)
+    sl = make_slice(calls - 1.0, calls + 1.0, puts - 1.0, puts + 1.0, k=k)
+    got = noarb.feasibility(sl)
+    assert got.status == "ok"
+    assert got.t == pytest.approx(0.0, abs=1e-6)
+
+
+def test_the_implied_forward_comes_back_from_the_program():
+    k = np.array([80.0, 90.0, 100.0, 110.0, 120.0])
+    calls, puts = arb_free(k, F=100.0, df=0.99)
+    sl = make_slice(calls, calls, puts, puts, k=k)
+    got = noarb.feasibility(sl)
+    assert got.forward == pytest.approx(100.0, rel=1e-4)
+    assert got.v == pytest.approx(0.99, rel=1e-4)
+
+
+def test_a_planted_convexity_violation_is_infeasible_and_binds_convexity():
+    k = np.array([80.0, 90.0, 100.0, 110.0, 120.0])
+    calls, puts = arb_free(k)
+    calls[2] += 4.0  # push the body up: the butterfly goes negative
+    sl = make_slice(calls, calls, puts, puts, k=k)
+    got = noarb.feasibility(sl)
+    assert got.t > 1e-6
+    assert "call_convexity" in got.binding
+    # a flipped slack sign in solve() would mark every row "binding" and still
+    # pass the assertion above; a family that is never tight here catches that
+    assert "call_upper" not in got.binding
+
+
+def test_a_planted_box_violation_is_infeasible():
+    k = np.array([80.0, 90.0, 100.0, 110.0, 120.0])
+    calls, puts = arb_free(k)
+    puts[1] += 3.0  # breaks C - P = u - v*K at one strike only
+    sl = make_slice(calls, calls, puts, puts, k=k)
+    got = noarb.feasibility(sl)
+    assert got.t > 1e-6
+
+
+def test_a_wider_band_absorbs_the_same_violation():
+    k = np.array([80.0, 90.0, 100.0, 110.0, 120.0])
+    calls, puts = arb_free(k)
+    calls[2] += 4.0
+    tight = noarb.feasibility(make_slice(calls, calls, puts, puts, k=k))
+    wide = noarb.feasibility(
+        make_slice(calls - 5.0, calls + 5.0, puts - 5.0, puts + 5.0, k=k)
+    )
+    assert tight.t > wide.t
+    assert wide.t == pytest.approx(0.0, abs=1e-6)
+
+
+def test_two_strikes_cannot_carry_a_convexity_test():
+    k = np.array([90.0, 100.0])
+    calls, puts = arb_free(k)
+    got = noarb.feasibility(make_slice(calls, calls, puts, puts, k=k))
+    assert got.status == "too_few_strikes"

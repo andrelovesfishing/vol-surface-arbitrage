@@ -13,6 +13,7 @@ from __future__ import annotations
 from typing import NamedTuple
 
 import numpy as np
+from scipy.optimize import linprog
 
 from vsa.slices import Slice
 
@@ -111,3 +112,48 @@ def build(sl: Slice) -> Problem:
         n_call=nc,
         n_put=npu,
     )
+
+
+class Solution(NamedTuple):
+    t: float                       # band widening needed, in USD
+    u: float
+    v: float
+    forward: float
+    status: str                    # ok | degenerate | too_few_strikes
+    binding: tuple[str, ...]
+
+
+_UNSOLVED = Solution(np.nan, np.nan, np.nan, np.nan, "degenerate", ())
+
+
+def solve(problem: Problem, *, tol: float = 1e-7) -> Solution:
+    """Minimise the band relaxation. t* = 0 means the band admits a clean surface."""
+    res = linprog(
+        problem.c, A_ub=problem.A_ub, b_ub=problem.b_ub,
+        A_eq=problem.A_eq if problem.A_eq.size else None,
+        b_eq=problem.b_eq if problem.b_eq.size else None,
+        bounds=problem.bounds, method="highs",
+    )
+    if not res.success:
+        return _UNSOLVED
+
+    x = res.x
+    iu, iv = problem.n_call + problem.n_put, problem.n_call + problem.n_put + 1
+    u, v = float(x[iu]), float(x[iv])
+
+    slack = problem.b_ub - problem.A_ub @ x
+    binding = {lab for lab, s in zip(problem.labels, slack)
+               if s <= tol and not lab.startswith("band_")}
+
+    return Solution(
+        t=float(x[-1]), u=u, v=v,
+        forward=u / v if v else np.nan,
+        status="ok", binding=tuple(sorted(binding)),
+    )
+
+
+def feasibility(sl: Slice, *, tol: float = 1e-7) -> Solution:
+    """Convenience: build then solve. A slice needs three strikes to be convex."""
+    if max(sl.call_k.size, sl.put_k.size) < 3:
+        return _UNSOLVED._replace(status="too_few_strikes")
+    return solve(build(sl), tol=tol)
