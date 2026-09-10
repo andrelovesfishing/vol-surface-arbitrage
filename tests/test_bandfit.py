@@ -66,3 +66,22 @@ def test_cache_is_written_then_reused(tmp_path, monkeypatch):
     assert (tmp_path / "mid.parquet").exists()
     monkeypatch.setattr(bandfit, "run", lambda *a, **k: pytest.fail("recomputed"))
     assert bandfit.cached(con, "mid").num_rows == first.num_rows
+
+
+def test_headline_counts_clean_slices_per_basis(tmp_path, monkeypatch):
+    monkeypatch.setattr(bandfit, "CACHE_DIR", tmp_path)
+    con = quotes_con(clean_surface(half_spread=400.0, bump=(80_000.0, 300.0)))
+    bandfit.materialise(con, ("mid", "executable"))
+    got = {h.basis: h for h in bandfit.headline(con)}
+    assert got["executable"].clean_share == pytest.approx(1.0)
+    assert got["mid"].clean_share == pytest.approx(0.0)
+    assert got["mid"].median_ticks > 0
+
+
+def test_unsolved_slices_are_counted_not_silently_clean(tmp_path, monkeypatch):
+    monkeypatch.setattr(bandfit, "CACHE_DIR", tmp_path)
+    rows = [r for r in clean_surface() if r["strike_usd"] in (70_000.0, 75_000.0)]
+    con = quotes_con(rows)  # two strikes: cannot carry convexity
+    bandfit.materialise(con, ("mid",))
+    got = bandfit.headline(con)[0]
+    assert got.n_unsolved == 1 and got.n_clean == 0

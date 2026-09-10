@@ -11,11 +11,13 @@ from pathlib import Path
 
 import duckdb
 
+from vsa.bandfit import headline as band_headline, materialise as materialise_bandfit
 from vsa.convexity import (
     PROFILE_DIMENSIONS, TICK_COIN, capture, capture_profile, headline, summarise,
 )
 from vsa.dataset import connect
 from vsa.load import PARQUET_DIR
+from vsa.reconcile import reconcile
 
 SENSITIVITY_TICKS = (0.0, 1.0, 2.0)  # the materiality floor is a judgement, so show it
 
@@ -74,6 +76,28 @@ def render(con: duckdb.DuckDBPyConnection, *, min_ticks: float = 1.0) -> str:
                 ).fetchall():
                     out.append(f"    {dim:<12}{bucket:<12}{n:>12,}{med:>10.1%}{p10:>10.1%}")
             out.append("")
+
+    materialise_bandfit(con)
+    out += ["Collective consistency of the quoted surface", "=" * 44,
+            "Does one arbitrage-free surface fit inside the whole band? (ADR 0010)", ""]
+
+    for (currency,) in con.sql("SELECT DISTINCT currency FROM quotes ORDER BY 1").fetchall():
+        out.append(currency)
+        out.append(f"  {'basis':<12}{'slices':>10}{'clean':>10}{'share':>9}"
+                   f"{'median t':>11}{'p90 t':>9}{'unsolved':>10}{'no tick':>10}")
+        for h in band_headline(con, currency=currency):
+            out.append(
+                f"  {h.basis:<12}{h.n_slices:>10,}{h.n_clean:>10,}{h.clean_share:>9.2%}"
+                f"{h.median_ticks:>10.2f}t{h.p90_ticks:>8.2f}t{h.n_unsolved:>10,}{h.n_no_tick:>10,}"
+            )
+        r = reconcile(con, currency=currency)
+        out += ["", "  our implied vol against Deribit's published mark_iv"]
+        out.append(
+            "    no published mark_iv to compare" if not r.n else
+            f"    median |gap| {r.median_abs:.4f} vol   (p90 {r.p90_abs:.4f}, "
+            f"signed {r.median_signed:+.4f})   over {r.n:,} quotes, {r.n_unsolved:,} unsolved"
+        )
+        out.append("")
 
     return "\n".join(out)
 

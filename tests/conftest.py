@@ -8,7 +8,9 @@ from pathlib import Path
 
 import duckdb
 import pyarrow as pa
+import pytest
 
+from vsa import bandfit
 from vsa.normalise import SCHEMA
 
 INDEX_USD = 79_357.47    # USD per coin: what a coin premium converts at
@@ -96,3 +98,9 @@ def quotes_con(rows: list[dict]):
     con.register("_synthetic", pa.Table.from_pylist(rows, schema=SCHEMA))
     con.execute("CREATE VIEW quotes AS SELECT * FROM _synthetic")
     return con
+
+
+@pytest.fixture(autouse=True)
+def _bandfit_cache_in_tmp(tmp_path, monkeypatch):
+    """Keep the real data/bandfit/ cache out of the test suite."""
+    monkeypatch.setattr(bandfit, "CACHE_DIR", tmp_path / "bandfit")

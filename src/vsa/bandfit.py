@@ -6,6 +6,7 @@ and analyse.py reads them back rather than re-solving.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import NamedTuple
 
 import duckdb
 import numpy as np
@@ -88,3 +89,56 @@ def materialise(
     """Expose every basis as the DuckDB view `bandfit`."""
     con.register("_bandfit", pa.concat_tables([cached(con, b, force=force) for b in bases]))
     con.execute("CREATE OR REPLACE VIEW bandfit AS SELECT * FROM _bandfit")
+
+
+class BandHeadline(NamedTuple):
+    basis: str
+    n_slices: int
+    n_clean: int          # t* = 0: the band admits an arbitrage-free surface
+    clean_share: float
+    median_ticks: float   # over the slices that do not
+    p90_ticks: float
+    n_unsolved: int
+    n_no_tick: int         # violating slices with no parity forward to scale by
+
+
+CLEAN_TOL_USD = 1e-6
+
+
+def headline(con: duckdb.DuckDBPyConnection, *, currency: str | None = None) -> list[BandHeadline]:
+    """Share of slices whose band admits a clean surface, per basis (ADR 0010).
+
+    The clean test is on `t_usd`, not on ticks: a slice with no paired
+    call/put strikes has no parity forward, so its tick is nan while its t*
+    is still well-defined. Such slices stay in the primary share and are
+    reported separately (`n_no_tick`) rather than silently dropped from the
+    tick severity distribution.
+    """
+    only = f"AND currency = '{currency}'" if currency else ""
+    rows = con.sql(f"""
+        WITH s AS (
+            SELECT basis, status, t_ticks,
+                   t_usd <= {CLEAN_TOL_USD} AS is_clean,
+                   isfinite(t_ticks) AS has_tick
+            FROM bandfit WHERE 1 = 1 {only}
+        )
+        SELECT basis,
+               count(*) FILTER (WHERE status = 'ok') AS n_slices,
+               count(*) FILTER (WHERE status = 'ok' AND is_clean) AS n_clean,
+               median(t_ticks) FILTER (WHERE status = 'ok' AND NOT is_clean AND isfinite(t_ticks)),
+               quantile_cont(t_ticks, 0.9) FILTER (WHERE status = 'ok' AND NOT is_clean AND isfinite(t_ticks)),
+               count(*) FILTER (WHERE status <> 'ok') AS n_unsolved,
+               count(*) FILTER (WHERE status = 'ok' AND NOT is_clean AND NOT has_tick) AS n_no_tick
+        FROM s GROUP BY basis ORDER BY basis
+    """).fetchall()
+    return [
+        BandHeadline(
+            basis=b, n_slices=n, n_clean=clean,
+            clean_share=clean / n if n else 0.0,
+            median_ticks=med if med is not None else 0.0,
+            p90_ticks=p90 if p90 is not None else 0.0,
+            n_unsolved=unsolved,
+            n_no_tick=no_tick,
+        )
+        for b, n, clean, med, p90, unsolved, no_tick in rows
+    ]
