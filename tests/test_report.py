@@ -29,3 +29,10 @@ def test_reports_capture_required_cut_by_each_observable():
     assert "capture required by slice" in text
     assert "tenor" in text and "moneyness" in text and "spread" in text
     assert "1.05-1.25" in text     # the body sits at 92k against a ~79.5k forward
+
+
+def test_reports_collective_consistency_and_the_no_tick_column():
+    text = render(quotes_con(surface({**CONVEX, 92_000: 2700.0}, half_spread=100.0)))
+
+    assert "Collective consistency of the quoted surface" in text
+    assert "no tick" in text      # header column for violations with no parity forward

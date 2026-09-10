@@ -85,3 +85,21 @@ def test_unsolved_slices_are_counted_not_silently_clean(tmp_path, monkeypatch):
     bandfit.materialise(con, ("mid",))
     got = bandfit.headline(con)[0]
     assert got.n_unsolved == 1 and got.n_clean == 0
+
+
+def test_clean_slices_with_no_parity_forward_are_still_counted_clean(tmp_path, monkeypatch):
+    monkeypatch.setattr(bandfit, "CACHE_DIR", tmp_path)
+    rows = [r for r in clean_surface() if r["option_type"] == "C"]  # no puts: no parity forward
+    con = quotes_con(rows)
+    bandfit.materialise(con, ("mid",))
+    got = bandfit.headline(con)[0]
+    assert got.clean_share == pytest.approx(1.0)
+
+
+def test_no_tick_violations_are_counted_not_silently_clean(tmp_path, monkeypatch):
+    monkeypatch.setattr(bandfit, "CACHE_DIR", tmp_path)
+    rows = [r for r in clean_surface(bump=(80_000.0, 3_000.0)) if r["option_type"] == "C"]
+    con = quotes_con(rows)  # no puts, so this violation has no tick to scale by
+    bandfit.materialise(con, ("mid",))
+    got = bandfit.headline(con)[0]
+    assert got.n_clean == 0 and got.n_no_tick == 1
