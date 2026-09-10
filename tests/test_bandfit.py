@@ -103,3 +103,13 @@ def test_no_tick_violations_are_counted_not_silently_clean(tmp_path, monkeypatch
     bandfit.materialise(con, ("mid",))
     got = bandfit.headline(con)[0]
     assert got.n_clean == 0 and got.n_no_tick == 1
+
+
+def test_the_cache_follows_the_caller_dataset_not_the_default(tmp_path):
+    """CACHE_DIR is bound to the default PARQUET_DIR, so a run against another
+    --parquet-dir must not read back a cache built from different data."""
+    con = quotes_con(clean_surface(half_spread=10.0))
+    elsewhere = tmp_path / "other"
+    bandfit.cached(con, "mid", cache_dir=elsewhere)
+    assert (elsewhere / "mid.parquet").exists()
+    assert not (bandfit.CACHE_DIR / "mid.parquet").exists()

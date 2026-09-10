@@ -53,6 +53,9 @@ def run(con: duckdb.DuckDBPyConnection, basis: str, *, currency: str | None = No
     for sl in iter_slices(con, basis, currency=currency):
         sol = noarb.feasibility(sl)
         fwd = forwards[(sl.currency, sl.snapshot_ts, sl.expiry_ts)]
+        # Parity forward, so the tick does not move with basis. convexity.py
+        # scales by the quotes' forward_usd instead, so the two tick counts
+        # differ by the parity basis (~1e-5 relative) and are not interchangeable.
         tick = TICK_COIN * fwd.forward
         rows.append({
             "currency": sl.currency,
@@ -72,9 +75,17 @@ def run(con: duckdb.DuckDBPyConnection, basis: str, *, currency: str | None = No
     return pa.Table.from_pylist(rows, schema=SCHEMA)
 
 
-def cached(con: duckdb.DuckDBPyConnection, basis: str, *, force: bool = False) -> pa.Table:
-    """Read the basis from parquet, computing it once if it is not there yet."""
-    path = Path(CACHE_DIR) / f"{basis}.parquet"
+def cached(
+    con: duckdb.DuckDBPyConnection, basis: str, *, force: bool = False,
+    cache_dir: Path | None = None,
+) -> pa.Table:
+    """Read the basis from parquet, computing it once if it is not there yet.
+
+    `cache_dir` follows the caller's dataset. CACHE_DIR is bound to the default
+    PARQUET_DIR, so a run against a different --parquet-dir would otherwise read
+    back a cache built from other data and report the two side by side.
+    """
+    path = Path(cache_dir or CACHE_DIR) / f"{basis}.parquet"
     if path.exists() and not force:
         return pq.read_table(path)
     table = run(con, basis)
@@ -84,10 +95,12 @@ def cached(con: duckdb.DuckDBPyConnection, basis: str, *, force: bool = False) -
 
 
 def materialise(
-    con: duckdb.DuckDBPyConnection, bases=tuple(BANDS), *, force: bool = False
+    con: duckdb.DuckDBPyConnection, bases=tuple(BANDS), *, force: bool = False,
+    cache_dir: Path | None = None,
 ) -> None:
     """Expose every basis as the DuckDB view `bandfit`."""
-    con.register("_bandfit", pa.concat_tables([cached(con, b, force=force) for b in bases]))
+    con.register("_bandfit", pa.concat_tables(
+        [cached(con, b, force=force, cache_dir=cache_dir) for b in bases]))
     con.execute("CREATE OR REPLACE VIEW bandfit AS SELECT * FROM _bandfit")
 
 

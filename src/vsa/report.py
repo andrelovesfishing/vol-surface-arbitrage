@@ -31,7 +31,10 @@ def _coverage(con: duckdb.DuckDBPyConnection) -> str:
             f"{first:%Y-%m-%d %H:%M} -> {last:%Y-%m-%d %H:%M} UTC")
 
 
-def render(con: duckdb.DuckDBPyConnection, *, min_ticks: float = 1.0) -> str:
+def render(
+    con: duckdb.DuckDBPyConnection, *, min_ticks: float = 1.0,
+    cache_dir: Path | None = None,
+) -> str:
     out = ["Convexity of the quoted surface", "=" * 31, _coverage(con),
            f"materiality floor: {min_ticks:g} tick ({TICK_COIN:g} coin per leg)", ""]
 
@@ -78,7 +81,7 @@ def render(con: duckdb.DuckDBPyConnection, *, min_ticks: float = 1.0) -> str:
                     out.append(f"    {dim:<12}{bucket:<12}{n:>12,}{med:>10.1%}{p10:>10.1%}")
             out.append("")
 
-    materialise_bandfit(con)
+    materialise_bandfit(con, cache_dir=cache_dir)
     out += ["Collective consistency of the quoted surface", "=" * 44,
             "Does one arbitrage-free surface fit inside the whole band? (ADR 0010)", ""]
 
@@ -119,4 +122,5 @@ def main() -> None:
     ap.add_argument("--min-ticks", type=float, default=1.0)
     args = ap.parse_args()
     with connect(args.parquet_dir) as con:
-        print(render(con, min_ticks=args.min_ticks))
+        print(render(con, min_ticks=args.min_ticks,
+                     cache_dir=args.parquet_dir.parent / "bandfit"))
