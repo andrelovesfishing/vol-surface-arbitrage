@@ -193,3 +193,11 @@ def test_two_strikes_cannot_carry_a_convexity_test():
     calls, puts = arb_free(k)
     got = noarb.feasibility(make_slice(calls, calls, puts, puts, k=k))
     assert got.status == "too_few_strikes"
+
+
+def test_a_nan_in_the_band_is_unsolved_rather_than_an_exception():
+    """mark_usd is independently nullable, so a band can carry nan. linprog
+    raises on nan instead of reporting infeasible, which would abort the run."""
+    sol = noarb.feasibility(make_slice([12.0, np.nan, 2.0], [13.0, 7.0, 3.0]))
+    assert sol.status != "ok"
+    assert np.isnan(sol.t)

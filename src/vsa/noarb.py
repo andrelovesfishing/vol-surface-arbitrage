@@ -128,6 +128,11 @@ _UNSOLVED = Solution(np.nan, np.nan, np.nan, np.nan, "degenerate", ())
 
 def solve(problem: Problem, *, tol: float = 1e-7) -> Solution:
     """Minimise the band relaxation. t* = 0 means the band admits a clean surface."""
+    # mark_usd is independently nullable, so a mark-basis band can carry nan.
+    # linprog raises on nan rather than returning infeasible, so screen it here.
+    if not all(np.all(np.isfinite(a)) for a in
+               (problem.A_ub, problem.b_ub, problem.A_eq, problem.b_eq)):
+        return _UNSOLVED
     res = linprog(
         problem.c, A_ub=problem.A_ub, b_ub=problem.b_ub,
         A_eq=problem.A_eq if problem.A_eq.size else None,
