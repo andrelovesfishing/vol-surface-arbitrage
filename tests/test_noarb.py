@@ -55,3 +55,74 @@ def test_discount_factor_is_bounded_by_tenor():
     p = noarb.build(make_slice([12.0, 6.0, 2.0], [13.0, 7.0, 3.0], tenor=2.0))
     lo, hi = p.bounds[p.n_call + p.n_put + 1]
     assert lo == pytest.approx(np.exp(-2.0)) and hi == 1.0
+
+
+def test_call_price_is_capped_by_forward_product():
+    p = noarb.build(make_slice([12.0, 6.0, 2.0], [13.0, 7.0, 3.0]))
+    row = p.A_ub[p.labels.index("call_upper")]
+    iu = p.n_call + p.n_put
+    assert row[0] == 1.0 and row[iu] == -1.0  # C <= u
+
+
+def test_call_price_is_floored_by_forward_minus_discounted_strike():
+    p = noarb.build(make_slice([12.0, 6.0, 2.0], [13.0, 7.0, 3.0]))
+    row = p.A_ub[p.labels.index("call_lower")]
+    iu, iv = p.n_call + p.n_put, p.n_call + p.n_put + 1
+    assert row[0] == -1.0 and row[iu] == 1.0 and row[iv] == pytest.approx(-90.0)
+
+
+def test_put_price_is_capped_by_discounted_strike():
+    p = noarb.build(make_slice(
+        [12.0, 6.0, 2.0], [13.0, 7.0, 3.0],
+        put_lo=[1.0, 5.0, 11.0], put_hi=[2.0, 6.0, 12.0],
+    ))
+    row = p.A_ub[p.labels.index("put_upper")]
+    j, iv = p.n_call, p.n_call + p.n_put + 1
+    assert row[j] == 1.0 and row[iv] == pytest.approx(-90.0)  # P <= v*K
+
+
+def test_put_price_is_floored_by_discounted_strike_minus_forward():
+    p = noarb.build(make_slice(
+        [12.0, 6.0, 2.0], [13.0, 7.0, 3.0],
+        put_lo=[1.0, 5.0, 11.0], put_hi=[2.0, 6.0, 12.0],
+    ))
+    row = p.A_ub[p.labels.index("put_lower")]
+    j = p.n_call
+    iu, iv = p.n_call + p.n_put, p.n_call + p.n_put + 1
+    assert row[j] == -1.0 and row[iv] == pytest.approx(90.0) and row[iu] == -1.0
+
+
+def test_call_prices_are_non_increasing_in_strike():
+    p = noarb.build(make_slice([12.0, 6.0, 2.0], [13.0, 7.0, 3.0]))
+    row = p.A_ub[p.labels.index("call_monotone")]
+    assert row[0] == -1.0 and row[1] == 1.0  # C_next - C_prev <= 0
+
+
+def test_put_prices_are_non_decreasing_in_strike():
+    p = noarb.build(make_slice(
+        [12.0, 6.0, 2.0], [13.0, 7.0, 3.0],
+        put_lo=[1.0, 5.0, 11.0], put_hi=[2.0, 6.0, 12.0],
+    ))
+    row = p.A_ub[p.labels.index("put_monotone")]
+    j = p.n_call
+    assert row[j] == 1.0 and row[j + 1] == -1.0  # P_prev - P_next <= 0
+
+
+def test_call_vertical_spread_is_capped_by_discounted_strike_gap():
+    p = noarb.build(make_slice([12.0, 6.0, 2.0], [13.0, 7.0, 3.0]))
+    row = p.A_ub[p.labels.index("call_vertical")]
+    iv = p.n_call + p.n_put + 1
+    # C_prev - C_next <= v*dK; v's coefficient must be negative to bound the gap
+    assert row[0] == 1.0 and row[1] == -1.0 and row[iv] == pytest.approx(-10.0)
+
+
+def test_put_vertical_spread_is_capped_by_discounted_strike_gap():
+    p = noarb.build(make_slice(
+        [12.0, 6.0, 2.0], [13.0, 7.0, 3.0],
+        put_lo=[1.0, 5.0, 11.0], put_hi=[2.0, 6.0, 12.0],
+    ))
+    row = p.A_ub[p.labels.index("put_vertical")]
+    j = p.n_call
+    iv = p.n_call + p.n_put + 1
+    # P_next - P_prev <= v*dK; v's coefficient must be negative to bound the gap
+    assert row[j] == -1.0 and row[j + 1] == 1.0 and row[iv] == pytest.approx(-10.0)
