@@ -1,4 +1,6 @@
 """Black-76 against vollib, which is used only as an oracle (ADR 0005)."""
+import warnings
+
 import numpy as np
 import pytest
 from vollib.black import black
@@ -113,3 +115,11 @@ def test_inversion_is_vectorised():
     p = black76.price(F, K, T, sigma, df, True)
     got = black76.implied_vol(p, F, K, T, df, True)
     assert got == pytest.approx(sigma, rel=1e-8)
+
+
+def test_a_denormal_vega_does_not_overflow():
+    """Newton divides by vega. Far enough into the wing vega goes denormal, and
+    evaluating err / v before applying the guard overflows to inf."""
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        black76.implied_vol(1913.0, 80_000.0, 794_794.4, 0.01, 0.999, True)

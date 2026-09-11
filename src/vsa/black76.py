@@ -94,8 +94,9 @@ def implied_vol(target, forward, strike, tenor, df, is_call, *, lo=1e-6, hi=5.0)
     for _ in range(_NEWTON_STEPS):
         err = price(F, K, T, x, d, call_flag) - p
         v = vega(F, K, T, x, d)
-        with np.errstate(divide="ignore", invalid="ignore"):
-            step = np.where(v > 1e-12, err / v, 0.0)
+        # np.where would evaluate err / v everywhere before selecting, so a
+        # denormal vega overflows even though the guard discards the result.
+        step = np.divide(err, v, out=np.zeros_like(err), where=v > 1e-12)
         x = np.clip(x - step, lo, hi)
 
     # Bisection finishes only the points Newton left stalled; it costs nothing elsewhere.
