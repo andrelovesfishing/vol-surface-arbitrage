@@ -1,3 +1,27 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vol-surface-arbitrage"
+version = "1.0.0"
+description = "How much static arbitrage on Deribit's BTC and ETH option surfaces survives at executable prices"
+requires-python = ">=3.13"
+# Floors are the versions the reported results were produced with.
+dependencies = [
+    "duckdb>=1.5.4",
+    "numpy>=2.3.2",
+    "pandas>=2.2.3",
+    "pyarrow>=25.0.0",
+    "scipy>=1.16.2",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.3.4", "vollib>=1.0.11"]  # vollib is the test oracle only (ADR 0005)
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
