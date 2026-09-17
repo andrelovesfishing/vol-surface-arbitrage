@@ -1,50 +1,28 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="720" height="340" viewBox="0 0 720 340" role="img" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif">
-<title>Share of option butterflies violating convexity: mid vs executable prices</title>
-<desc>At mid prices 16.4%, 9.3% and 5.0% of BTC butterflies and 13.5%, 9.3% and 6.1% of ETH butterflies violate convexity at materiality floors of 0, 1 and 2 ticks. At executable prices the share is zero at every floor on both.</desc>
-<rect width="720" height="340" rx="8" fill="#1a1a19"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="336" viewBox="0 0 720 336" role="img" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif">
+<title>Share of option butterflies that look like arbitrage: mid vs executable prices</title>
+<desc>At mid prices 9.30% of BTC butterflies and 9.25% of ETH butterflies look like arbitrage. At executable prices the share is zero on both.</desc>
+<rect width="720" height="336" rx="8" fill="#1a1a19"/>
 <text x="52" y="34" font-size="16" font-weight="600" fill="#ffffff">Apparent arbitrage vanishes at tradeable prices</text>
-<text x="52" y="56" font-size="12.5" fill="#c3c2b7">Share of butterflies violating convexity, 5,284,244 quotes</text>
+<text x="52" y="56" font-size="12.5" fill="#c3c2b7">Share of 4.7 million option butterflies that look like arbitrage</text>
 <rect x="52" y="72" width="10" height="10" rx="2" fill="#3987e5"/>
 <text x="68" y="81" font-size="12" fill="#c3c2b7">mid price</text>
 <rect x="147.4" y="72" width="10" height="10" rx="2" fill="#d95926"/>
-<text x="163.4" y="81" font-size="12" fill="#c3c2b7">executable price (bid/ask)</text>
-<text x="52.0" y="104" font-size="12" font-weight="600" fill="#ffffff">BTC</text>
-<text x="44.0" y="290.0" font-size="11" text-anchor="end" fill="#898781" style="font-variant-numeric:tabular-nums">0%</text>
-<line x1="52.0" x2="362.0" y1="237.66666666666666" y2="237.66666666666666" stroke="#2c2c2a" stroke-width="1"/>
-<text x="44.0" y="241.66666666666666" font-size="11" text-anchor="end" fill="#898781" style="font-variant-numeric:tabular-nums">5%</text>
-<line x1="52.0" x2="362.0" y1="189.33333333333331" y2="189.33333333333331" stroke="#2c2c2a" stroke-width="1"/>
-<text x="44.0" y="193.33333333333331" font-size="11" text-anchor="end" fill="#898781" style="font-variant-numeric:tabular-nums">10%</text>
-<line x1="52.0" x2="362.0" y1="141.0" y2="141.0" stroke="#2c2c2a" stroke-width="1"/>
-<text x="44.0" y="145.0" font-size="11" text-anchor="end" fill="#898781" style="font-variant-numeric:tabular-nums">15%</text>
-<path d="M78.66666666666666,286 V131.17666666666668 Q78.66666666666666,127.17666666666668 82.66666666666666,127.17666666666668 H98.66666666666666 Q102.66666666666666,127.17666666666668 102.66666666666666,131.17666666666668 V286 Z" fill="#3987e5"/>
-<rect x="104.66666666666666" y="284" width="24" height="2" fill="#d95926"/>
-<text x="116.66666666666666" y="278" font-size="12" font-weight="600" text-anchor="middle" fill="#ffffff">0</text>
-<text x="103.66666666666666" y="304" font-size="11" text-anchor="middle" fill="#898781">0 ticks</text>
-<path d="M182.0,286 V200.1 Q182.0,196.1 186.0,196.1 H202.0 Q206.0,196.1 206.0,200.1 V286 Z" fill="#3987e5"/>
-<rect x="208.0" y="284" width="24" height="2" fill="#d95926"/>
-<text x="220.0" y="278" font-size="12" font-weight="600" text-anchor="middle" fill="#ffffff">0</text>
-<text x="207.0" y="304" font-size="11" text-anchor="middle" fill="#898781">1 tick</text>
-<path d="M285.3333333333333,286 V242.15 Q285.3333333333333,238.15 289.3333333333333,238.15 H305.3333333333333 Q309.3333333333333,238.15 309.3333333333333,242.15 V286 Z" fill="#3987e5"/>
-<rect x="311.3333333333333" y="284" width="24" height="2" fill="#d95926"/>
-<text x="323.3333333333333" y="278" font-size="12" font-weight="600" text-anchor="middle" fill="#ffffff">0</text>
-<text x="310.3333333333333" y="304" font-size="11" text-anchor="middle" fill="#898781">2 ticks</text>
-<line x1="52.0" x2="362.0" y1="286" y2="286" stroke="#383835" stroke-width="1"/>
-<text x="390.0" y="104" font-size="12" font-weight="600" fill="#ffffff">ETH</text>
-<line x1="390.0" x2="700.0" y1="237.66666666666666" y2="237.66666666666666" stroke="#2c2c2a" stroke-width="1"/>
-<line x1="390.0" x2="700.0" y1="189.33333333333331" y2="189.33333333333331" stroke="#2c2c2a" stroke-width="1"/>
-<line x1="390.0" x2="700.0" y1="141.0" y2="141.0" stroke="#2c2c2a" stroke-width="1"/>
-<path d="M416.6666666666667,286 V159.98333333333332 Q416.6666666666667,155.98333333333332 420.6666666666667,155.98333333333332 H436.6666666666667 Q440.6666666666667,155.98333333333332 440.6666666666667,159.98333333333332 V286 Z" fill="#3987e5"/>
-<rect x="442.6666666666667" y="284" width="24" height="2" fill="#d95926"/>
-<text x="454.6666666666667" y="278" font-size="12" font-weight="600" text-anchor="middle" fill="#ffffff">0</text>
-<text x="441.6666666666667" y="304" font-size="11" text-anchor="middle" fill="#898781">0 ticks</text>
-<path d="M520.0,286 V200.58333333333334 Q520.0,196.58333333333334 524.0,196.58333333333334 H540.0 Q544.0,196.58333333333334 544.0,200.58333333333334 V286 Z" fill="#3987e5"/>
-<rect x="546.0" y="284" width="24" height="2" fill="#d95926"/>
-<text x="558.0" y="278" font-size="12" font-weight="600" text-anchor="middle" fill="#ffffff">0</text>
-<text x="545.0" y="304" font-size="11" text-anchor="middle" fill="#898781">1 tick</text>
-<path d="M623.3333333333333,286 V230.93666666666667 Q623.3333333333333,226.93666666666667 627.3333333333333,226.93666666666667 H643.3333333333333 Q647.3333333333333,226.93666666666667 647.3333333333333,230.93666666666667 V286 Z" fill="#3987e5"/>
-<rect x="649.3333333333333" y="284" width="24" height="2" fill="#d95926"/>
-<text x="661.3333333333333" y="278" font-size="12" font-weight="600" text-anchor="middle" fill="#ffffff">0</text>
-<text x="648.3333333333333" y="304" font-size="11" text-anchor="middle" fill="#898781">2 ticks</text>
-<line x1="390.0" x2="700.0" y1="286" y2="286" stroke="#383835" stroke-width="1"/>
-<text x="52" y="326" font-size="11" fill="#898781">Materiality floor: how large a violation must be to count. 1 tick = 0.0001 coin.</text>
+<text x="163.4" y="81" font-size="12" fill="#c3c2b7">executable price (buy at ask, sell at bid)</text>
+<text x="44" y="272.0" font-size="11" text-anchor="end" fill="#898781" style="font-variant-numeric:tabular-nums">0%</text>
+<line x1="52" x2="700" y1="190.0" y2="190.0" stroke="#2c2c2a" stroke-width="1"/>
+<text x="44" y="194.0" font-size="11" text-anchor="end" fill="#898781" style="font-variant-numeric:tabular-nums">5%</text>
+<line x1="52" x2="700" y1="112.0" y2="112.0" stroke="#2c2c2a" stroke-width="1"/>
+<text x="44" y="116.0" font-size="11" text-anchor="end" fill="#898781" style="font-variant-numeric:tabular-nums">10%</text>
+<path d="M154.0,268 V126.91999999999999 Q154.0,122.91999999999999 158.0,122.91999999999999 H206.0 Q210.0,122.91999999999999 210.0,126.91999999999999 V268 Z" fill="#3987e5"/>
+<text x="182.0" y="114.91999999999999" font-size="13" font-weight="600" text-anchor="middle" fill="#ffffff">9.30%</text>
+<rect x="218.0" y="266" width="56" height="2" fill="#d95926"/>
+<text x="246.0" y="260" font-size="13" font-weight="600" text-anchor="middle" fill="#ffffff">0</text>
+<text x="214.0" y="288" font-size="12" font-weight="600" text-anchor="middle" fill="#ffffff">BTC</text>
+<path d="M478.0,268 V127.69999999999999 Q478.0,123.69999999999999 482.0,123.69999999999999 H530.0 Q534.0,123.69999999999999 534.0,127.69999999999999 V268 Z" fill="#3987e5"/>
+<text x="506.0" y="115.69999999999999" font-size="13" font-weight="600" text-anchor="middle" fill="#ffffff">9.25%</text>
+<rect x="542.0" y="266" width="56" height="2" fill="#d95926"/>
+<text x="570.0" y="260" font-size="13" font-weight="600" text-anchor="middle" fill="#ffffff">0</text>
+<text x="538.0" y="288" font-size="12" font-weight="600" text-anchor="middle" fill="#ffffff">ETH</text>
+<line x1="52" x2="700" y1="268" y2="268" stroke="#383835" stroke-width="1"/>
+<text x="52" y="322" font-size="11" fill="#898781">Counts violations larger than 1 tick (0.0001 of a coin), the most rounding can create. Deribit, 6-10 Sep 2026.</text>
 </svg>
