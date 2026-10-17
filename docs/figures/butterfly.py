@@ -13,9 +13,9 @@ MID = tuple((b + a) / 2 for b, a in zip(BID, ASK))
 
 THEMES = {
     "light": dict(surface="#fcfcfb", ink="#0b0b0b", ink2="#52514e", muted="#898781",
-                  grid="#e1e0d9", base="#c3c2b7", spread="#d6d5cd", mid="#2a78d6", exe="#eb6834"),
+                  grid="#e1e0d9", base="#c3c2b7", spread="#d6d5cd", mid="#008a7e", exe="#c2512f"),
     "dark": dict(surface="#1a1a19", ink="#ffffff", ink2="#c3c2b7", muted="#898781",
-                 grid="#2c2c2a", base="#383835", spread="#45453f", mid="#3987e5", exe="#d95926"),
+                 grid="#2c2c2a", base="#383835", spread="#45453f", mid="#1f9a90", exe="#d0623f"),
 }
 
 W, H = 720, 400

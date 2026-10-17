@@ -4,23 +4,23 @@
 <rect width="720" height="336" rx="8" fill="#1a1a19"/>
 <text x="52" y="34" font-size="16" font-weight="600" fill="#ffffff">Apparent arbitrage vanishes at tradeable prices</text>
 <text x="52" y="56" font-size="12.5" fill="#c3c2b7">Share of 4.7 million option butterflies that look like arbitrage</text>
-<rect x="52" y="72" width="10" height="10" rx="2" fill="#3987e5"/>
+<rect x="52" y="72" width="10" height="10" rx="2" fill="#1f9a90"/>
 <text x="68" y="81" font-size="12" fill="#c3c2b7">mid price</text>
-<rect x="147.4" y="72" width="10" height="10" rx="2" fill="#d95926"/>
+<rect x="147.4" y="72" width="10" height="10" rx="2" fill="#d0623f"/>
 <text x="163.4" y="81" font-size="12" fill="#c3c2b7">executable price (buy at ask, sell at bid)</text>
 <text x="44" y="272.0" font-size="11" text-anchor="end" fill="#898781" style="font-variant-numeric:tabular-nums">0%</text>
 <line x1="52" x2="700" y1="190.0" y2="190.0" stroke="#2c2c2a" stroke-width="1"/>
 <text x="44" y="194.0" font-size="11" text-anchor="end" fill="#898781" style="font-variant-numeric:tabular-nums">5%</text>
 <line x1="52" x2="700" y1="112.0" y2="112.0" stroke="#2c2c2a" stroke-width="1"/>
 <text x="44" y="116.0" font-size="11" text-anchor="end" fill="#898781" style="font-variant-numeric:tabular-nums">10%</text>
-<path d="M154.0,268 V126.91999999999999 Q154.0,122.91999999999999 158.0,122.91999999999999 H206.0 Q210.0,122.91999999999999 210.0,126.91999999999999 V268 Z" fill="#3987e5"/>
+<path d="M154.0,268 V126.91999999999999 Q154.0,122.91999999999999 158.0,122.91999999999999 H206.0 Q210.0,122.91999999999999 210.0,126.91999999999999 V268 Z" fill="#1f9a90"/>
 <text x="182.0" y="114.91999999999999" font-size="13" font-weight="600" text-anchor="middle" fill="#ffffff">9.30%</text>
-<rect x="218.0" y="266" width="56" height="2" fill="#d95926"/>
+<rect x="218.0" y="266" width="56" height="2" fill="#d0623f"/>
 <text x="246.0" y="260" font-size="13" font-weight="600" text-anchor="middle" fill="#ffffff">0</text>
 <text x="214.0" y="288" font-size="12" font-weight="600" text-anchor="middle" fill="#ffffff">BTC</text>
-<path d="M478.0,268 V127.69999999999999 Q478.0,123.69999999999999 482.0,123.69999999999999 H530.0 Q534.0,123.69999999999999 534.0,127.69999999999999 V268 Z" fill="#3987e5"/>
+<path d="M478.0,268 V127.69999999999999 Q478.0,123.69999999999999 482.0,123.69999999999999 H530.0 Q534.0,123.69999999999999 534.0,127.69999999999999 V268 Z" fill="#1f9a90"/>
 <text x="506.0" y="115.69999999999999" font-size="13" font-weight="600" text-anchor="middle" fill="#ffffff">9.25%</text>
-<rect x="542.0" y="266" width="56" height="2" fill="#d95926"/>
+<rect x="542.0" y="266" width="56" height="2" fill="#d0623f"/>
 <text x="570.0" y="260" font-size="13" font-weight="600" text-anchor="middle" fill="#ffffff">0</text>
 <text x="538.0" y="288" font-size="12" font-weight="600" text-anchor="middle" fill="#ffffff">ETH</text>
 <line x1="52" x2="700" y1="268" y2="268" stroke="#383835" stroke-width="1"/>
